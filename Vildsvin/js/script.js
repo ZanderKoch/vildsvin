@@ -14,8 +14,11 @@ var stopBtn;			// Referens till stoppknappen
 var pigCount = 0           //Antal visade vildsvin
 var hitCount = 0           //Antal påkörda vildsvin
 var pigTimerRef = null;    //Referens till timern för skapandet av vildsvin 
-const pigTimerStep = 5000; //tid mellan visning av vildsvin
+const pigTimerStep = 2000; //tid mellan visning av vildsvin
 var pigElem;               //Referens till img-elementet för vildsvinen
+var pigCaught = true       //boolean för om grisen är fångad
+var pigNrElem;             //element för att visa hur många vildsvin som visats
+var hitCounterElem;        //element för att visa hur många vildsvin som fångats
 
 // ------------------------------
 // Initiera globala variabler och koppla funktion till knapp
@@ -36,6 +39,7 @@ function init() {
 	/* === Tillägg i uppgiften === */
         pigElem = document.getElementById("pig");
         pigNrElem = document.getElementById("pigNr");
+        hitCounterElem = document.getElementById("hitCounter");
 
 } // End init
 window.addEventListener("load",init);
@@ -51,7 +55,7 @@ function checkKey(e) {
 			carElem.src = "img/" + carImgs[carDir];
 			break;
 		case 39:  // Pil höger
-		case 173: // -
+		case 189: // - 
 			carDir++; // Bilens riktning 90 grader åt höger
 			if (carDir > 3) carDir = 0;
 			carElem.src = "img/" + carImgs[carDir];
@@ -69,11 +73,16 @@ function startGame() {
 	carElem.src = "img/" + carImgs[carDir];
 	moveCar();
 	/* === Tillägg i uppgiften === */
-	pigCount = 0;
+	pigElem.style.visibility = "hidden"
+    
+    pigCount = 0;
+    pigNrElem.inner = pigCount
+    
     hitCount = 0;
-    showPig()
-
-
+    hitCounterElem.innerHTML = hitCount;
+   
+    pigCaught = true;
+    pigTimerRef = setTimeout(showPig, pigTimerStep);
 } // End startGame
 // ------------------------------
 // Stoppa spelet
@@ -84,10 +93,11 @@ function stopGame() {
 	/* === Tillägg i uppgiften === */
     if (pigTimerRef != null){
         clearTimeout(pigTimerRef);
-    } 
-
+    }
 } // End stopGame
 // ------------------------------
+
+
 // Flytta bilen ett steg framåt i bilens riktning
 function moveCar() {
 	let xLimit = boardElem.offsetWidth - carElem.offsetWidth;
@@ -116,10 +126,7 @@ function moveCar() {
 	carElem.style.top = y + "px";
 	timerRef = setTimeout(moveCar,timerStep);
 	/* === Tillägg i uppgiften === */
-	if(checkCollision()){
-
-    }
-
+    checkCollision();
 } // End moveCar
 // ------------------------------
 
@@ -127,7 +134,10 @@ function moveCar() {
 
 // visa vildsvin på slumpvald plats på bräde om 9 eller färre redan visats
 function showPig() {
-	
+	pigCaught = false;
+
+    //checking if function is run for first time, if so
+
     if(pigCount < 10){  
         pigElem.src = "img/pig.png"
         pigElem.style.visibility = "visible";
@@ -144,12 +154,18 @@ function showPig() {
         pigNrElem.innerHTML = pigCount;
         pigTimerRef = setTimeout(showPig, pigTimerStep);
     }
+    else{
+        stopGame();
+    }
 } // End showPig
 // ------------------------------
 
 // kolla om bilen överlappar med ett vildsvin
 function checkCollision() {
-
+    
+    if(pigCaught){
+        return;
+    }
     let pigX = parseInt(pigElem.style.left); //pig's left edge and x position
     let pigY = parseInt(pigElem.style.top);  //pig's top edge and y position
     let pigR = pigX + pigElem.offsetWidth;   //pig's right edge
@@ -160,14 +176,14 @@ function checkCollision() {
     let carR = carX + carElem.offsetWidth;   //car's right edge
     let carB = carY + carElem.offsetHeight;  //car's bottom edge
 
-
     if(carX < pigR && 
        carR > pigX &&
        carY < pigB && 
        carB > pigY){
-        console.log("pang!");
-        console.log(pigElem.src);
-        return true;
+        pigCaught = true;
+        pigElem.src = "img/smack.png"
+        hitCount++;
+        hitCounterElem.innerHTML = hitCount;
     } 
     
 } // End checkCollision
